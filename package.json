@@ -11,8 +11,8 @@
     "webpack:webgpu-gltf:serve": "webpack serve --env=optimization=\"webgpu,gltf,textureLoaders,vendors\" --env=ignore=\"notGLTF,notWebGPU\"",
     "webpack:serve": "webpack serve",
     "rollup:build": "rollup -c",
-    "rollup:webgl-gltf:build": "rimraf ./dist-rollup/*.js && rimraf ./dist-rollup/*.map && rollup -c --environment \"optimization:webgl,gltf,textureLoaders,vendors\" --environment \"ignore:webgpu,notGLTF\"",
-    "rollup:webgpu-gltf:build": "rimraf ./dist-rollup/*.js && rimraf ./dist-rollup/*.map && rollup -c --environment \"optimization:webgpu,gltf,textureLoaders,vendors\" --environment \"ignore:notWebGPU,notGLTF\""
+    "rollup:webgl-gltf:build": "rimraf ./dist-rollup/*.js && rimraf ./dist-rollup/*.map && rollup -c --environment \"optimization:webgl,gltf,textureLoaders,vendors\" --environment \"ignore:webgpu;notGLTF\"",
+    "rollup:webgpu-gltf:build": "rimraf ./dist-rollup/*.js && rimraf ./dist-rollup/*.map && rollup -c --environment \"optimization:webgpu,gltf,textureLoaders,vendors\" --environment \"ignore:notWebGPU;notGLTF\""
   },
   "author": "Raanan Weber (@RaananW)",
   "license": "MIT",

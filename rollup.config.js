@@ -7,17 +7,17 @@ const isProduction = process.env.NODE_ENV === "production"; // --environment NOD
 
 export default async function (env) {
     const opts = getOptimizations(
-        (process.env.optimization || "all").split(",")
+        (process.env.optimization || "all").split(";")
     );
-    const ignores = getIgnoresArray((process.env.ignore || "").split(","));
-    const asyncSet = new Set();
-    const syncSet = new Set();
+    const ignores = getIgnoresArray((process.env.ignore || "").split(";"));
+    // const asyncSet = new Set();
+    // const syncSet = new Set();
     return {
         input: "src/index.ts",
         output: {
             sourcemap: !isProduction,
             dir: "dist-rollup",
-            
+
             // manualChunks needs to be implemented correctly. at the moment it is not possible to do the same as webpack due to side-effects
             // until then there will be quite a few chunks that are not optimized, but it will still work!
 
@@ -93,7 +93,7 @@ function ignore(
                 return null;
             }
             return options.ignoreCallback(
-                path.join(importer || "", source),
+                path.join(importer ? path.dirname(importer) : "", source),
                 list
             )
                 ? ignoreStaticFilename
