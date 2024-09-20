@@ -15,6 +15,7 @@ export default async function (env) {
     return {
         input: "src/index.ts",
         output: {
+            inlineDynamicImports: process.env.singleChunk,
             sourcemap: !isProduction,
             dir: "dist-rollup",
 

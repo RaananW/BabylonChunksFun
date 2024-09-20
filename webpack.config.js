@@ -70,6 +70,9 @@ export default function (env) {
                     });
                 },
             }),
+            new webpack.optimize.LimitChunkCountPlugin({
+                maxChunks: env.singleChunk ? 1 : 30,
+            }),
         ],
         optimization: {
             ...getOptimizations((env.optimization || "all").split(",")),

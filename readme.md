@@ -27,6 +27,13 @@ Note that if you use the webgpu version, the initial load will fail! That is bec
 
 If you are building with rollup, add `-- --environment NODE_ENV:production` after the npm run call. if you are building with webpack, add `-- --env=mode=production`.
 
+### Single chunk
+
+To avoid generating chunks (but still use the ignore lists!) add the following to the npm command:
+
+- in rollup add `-- --environment singleChunk:true`
+- in webpack add `-- --env=singleChunk=true`
+
 ## Caveats
 
 - Due to the way rollup works and the way we currently pack our packages, rollup's manual chunks function doesn't quite work as expected. If you want to know exactly why I will be happy to explain privately. The webpack version works as expected.
