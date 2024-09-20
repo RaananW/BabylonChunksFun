@@ -19,7 +19,7 @@ export default async function (env) {
             dir: "dist-rollup",
             
             // manualChunks needs to be implemented correctly. at the moment it is not possible to do the same as webpack due to side-effects
-            // until then there will be quite a few chunks that are not optimized
+            // until then there will be quite a few chunks that are not optimized, but it will still work!
 
             // manualChunks: (id, { getModuleInfo, getModuleIds }) => {
             //     const async =
