@@ -1,0 +1,35 @@
+{
+  "name": "babyloncodesplitting",
+  "version": "1.0.0",
+  "description": "Babylon.js code splitting using webpack and rollup",
+  "main": "index.js",
+  "scripts": {
+    "webpack:build": "webpack",
+    "webpack:webgl-gltf:build": "webpack --env=optimization=\"webgl,gltf,textureLoaders,vendors\" --env=ignore=\"webgpu,notGLTF\"",
+    "webpack:webgl-gltf:serve": "webpack serve --env=optimization=\"webgl,gltf,textureLoaders,vendors\" --env=ignore=\"webgpu,notGLTF\"",
+    "webpack:webgpu-gltf:build": "webpack --env=optimization=\"webgpu,gltf,textureLoaders,vendors\" --env=ignore=\"notGLTF,notWebGPU\"",
+    "webpack:webgpu-gltf:serve": "webpack serve --env=optimization=\"webgpu,gltf,textureLoaders,vendors\" --env=ignore=\"notGLTF,notWebGPU\"",
+    "webpack:serve": "webpack serve",
+    "rollup:build:default": "rollup -c"
+  },
+  "author": "Raanan Weber (@RaananW)",
+  "license": "Apache-2.0",
+  "type": "module",
+  "dependencies": {
+    "@babylonjs/core": "^7.25.2",
+    "@babylonjs/loaders": "^7.25.2"
+  },
+  "devDependencies": {
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-typescript": "^11.1.6",
+    "deepmerge": "^4.3.1",
+    "html-webpack-plugin": "^5.6.0",
+    "rollup": "^4.21.3",
+    "source-map-loader": "^5.0.0",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.6.2",
+    "webpack": "^5.94.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^5.1.0"
+  }
+}
