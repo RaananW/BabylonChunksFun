@@ -7,11 +7,10 @@ export function getOptimizations(types) {
         .map((type) => getOptimization(type))
         .filter((optimization) => optimization !== undefined)
         .reduce((acc, curr) => deepmerge(acc, curr), {});
-    console.log(opts);
     return opts;
 }
 
-const getMapping = (type, ignore) => {
+export function getMapping(type, ignore) {
     switch (type) {
         case "vendors": {
             return ["vendors;chunks=initial", "vendors;chunks=async"];
@@ -69,7 +68,7 @@ const getMapping = (type, ignore) => {
             return [type];
         }
     }
-};
+}
 
 export function getIgnoresArray(types) {
     return (types || [])
@@ -79,7 +78,7 @@ export function getIgnoresArray(types) {
         .filter((ignore) => ignore);
 }
 
-function getRegexForType(type) {
+export function getRegexForType(type) {
     switch (type) {
         case "vendors": {
             return /@babylonjs/;
@@ -263,7 +262,8 @@ function getOptimization(optimizationType) {
             };
         }
         default: {
-            if (!type) {
+            console.log("Unknown type", type, test.length);
+            if (!type || Array.isArray(test)) {
                 return undefined;
             } else {
                 return {
