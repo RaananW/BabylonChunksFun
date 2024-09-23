@@ -19,7 +19,7 @@ Simple - build your project using one of the provided scripts. The scripts are:
 - `npm run webpack:webgpu-gltf:build` - build the project with ONLY webgpu and glTF loaders included
 - `npm run rollup:webgpu-gltf:build` - build the project with ONLY webgpu and glTF loaders included
 
-To server (currently only supported with webpack) change "build" with "serve" in the script name. For example `npm run webpack:webgl-gltf:serve`
+To serve (currently only supported with webpack) change "build" with "serve" in the script name. For example `npm run webpack:webgl-gltf:serve`
 
 Note that if you use the webgpu version, the initial load will fail! That is because the initial load is configured to use WebGL. add `?engine=webgpu` to the URL to see it working.
 
