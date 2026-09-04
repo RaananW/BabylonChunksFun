@@ -1,12 +1,10 @@
 import { Scene } from "@babylonjs/core/scene.js";
 import { ArcRotateCamera } from "@babylonjs/core/Cameras/arcRotateCamera.js";
 import { Vector3 } from "@babylonjs/core/Maths/math.vector.js";
-import { SceneLoader } from "@babylonjs/core/Loading/sceneLoader.js";
+import { ImportMeshAsync } from "@babylonjs/core/Loading/sceneLoader.js";
 import { EnvironmentHelper } from "@babylonjs/core/Helpers/environmentHelper.js";
 import { registerBuiltInLoaders } from "@babylonjs/loaders/dynamic.js";
-
-// digital assets
-import { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.js";
+import type { AbstractEngine } from "@babylonjs/core/Engines/abstractEngine.js";
 
 export const createScene = async (
     engine: AbstractEngine,
@@ -28,10 +26,8 @@ export const createScene = async (
     // This targets the camera to scene origin
     camera.setTarget(Vector3.Zero());
 
-    // This attaches the camera to the canvas
-    camera.attachControl(true);
+    camera.attachControl(canvas, true);
 
-    // if not setting the envtext of the scene, we have to load the DDS module as well
     new EnvironmentHelper(
         {
             skyboxTexture: "./room.env",
@@ -40,27 +36,29 @@ export const createScene = async (
         scene
     );
 
-    const importResult = await SceneLoader.ImportMeshAsync(
-        "",
-        "",
-        "./controller.glb",
-        scene,
-    );
+    const importResult = await ImportMeshAsync("./controller.glb", scene);
+    const rootMesh = importResult.meshes[0];
 
-    // just scale it so we can see it better
-    importResult.meshes[0].scaling.scaleInPlace(10);
+    if (!rootMesh) {
+        throw new Error("The controller model did not contain any meshes.");
+    }
+    rootMesh.scaling.scaleInPlace(10);
 
     return scene;
 };
 
 export const babylonInit = async (): Promise<void> => {
     const engineType =
-        location.search.split("engine=")[1]?.split("&")[0] || "webgl";
-    // Get the canvas element
-    const canvas = document.getElementById(
-        "renderCanvas"
-    ) as unknown as HTMLCanvasElement;
-    // Generate the BABYLON 3D engine
+        new URLSearchParams(window.location.search).get("engine") || "webgl";
+    const canvas = document.getElementById("renderCanvas");
+
+    if (!(canvas instanceof HTMLCanvasElement)) {
+        throw new Error("Could not find the render canvas.");
+    }
+    if (engineType !== "webgl" && engineType !== "webgpu") {
+        throw new Error(`Unsupported engine "${engineType}".`);
+    }
+
     let engine: AbstractEngine;
     if (engineType === "webgl") {
         engine = new (await import("@babylonjs/core/Engines/engine.js")).Engine(
@@ -77,23 +75,26 @@ export const babylonInit = async (): Promise<void> => {
 
     registerBuiltInLoaders();
 
-    // Create the scene
     const scene = await createScene(engine, canvas);
 
-    // JUST FOR TESTING. Not needed for anything else
-    (window as any).scene = scene;
-
-    // Register a render loop to repeatedly render the scene
-    engine.runRenderLoop(function () {
+    engine.runRenderLoop(() => {
         scene.render();
     });
 
-    // Watch for browser/canvas resize events
-    window.addEventListener("resize", function () {
+    const resize = () => {
         engine.resize();
-    });
+    };
+    window.addEventListener("resize", resize);
+    window.addEventListener(
+        "pagehide",
+        () => {
+            window.removeEventListener("resize", resize);
+            engine.dispose();
+        },
+        { once: true }
+    );
 };
 
-babylonInit().then(() => {
-    // scene started rendering, everything is initialized
+void babylonInit().catch((error: unknown) => {
+    console.error("Failed to initialize the Babylon.js scene.", error);
 });

@@ -1,16 +1,21 @@
 {
-	"compilerOptions": {
-        "module": "esNext",
-		"target": "ESNext",
-		"moduleResolution": "node",
-		"strict": true,
-		"noImplicitAny": true,
+    "compilerOptions": {
+        "target": "ES2022",
+        "module": "ESNext",
+        "moduleResolution": "Bundler",
+        "lib": [
+            "DOM",
+            "ES2022"
+        ],
+        "strict": true,
         "noImplicitReturns": true,
-        "noImplicitThis": true,
-        "strictNullChecks": true,
-        "strictFunctionTypes": true,
-		"preserveConstEnums":true,
-        "sourceMap": true,
+        "isolatedModules": true,
+        "verbatimModuleSyntax": true,
+        "noEmit": true,
         "esModuleInterop": true,
-	}
+        "forceConsistentCasingInFileNames": true
+    },
+    "include": [
+        "src/**/*.ts"
+    ]
 }

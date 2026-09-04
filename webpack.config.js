@@ -1,19 +1,26 @@
 import HtmlWebpackPlugin from "html-webpack-plugin";
 import path from "path";
 import fs from "fs";
-import { getOptimizations, getIgnoresArray } from "./optimizations.js";
+import {
+    getOptimizations,
+    getIgnoresArray,
+    shouldIgnore,
+} from "./optimizations.js";
 import webpack from "webpack";
 
 const appDirectory = fs.realpathSync(process.cwd());
 
-export default function (env) {
+export default function (env = {}) {
     const ignoreList = getIgnoresArray((env.ignore || "").split(","));
+    const mode = env.mode || "development";
+
     return {
         entry: path.resolve(appDirectory, "src/index.ts"),
-        mode: env.mode || "development",
+        mode,
+        devtool: mode === "production" ? "source-map" : "eval-source-map",
         output: {
             filename: "js/[name].js",
-            path: path.resolve("./dist-webpack/"),
+            path: path.resolve(appDirectory, "dist-webpack"),
             clean: true,
         },
         resolve: {
@@ -26,16 +33,24 @@ export default function (env) {
         module: {
             rules: [
                 {
-                    test: /\.m?js/,
-                },
-                {
-                    test: /\.(js|mjs|jsx|ts|tsx)$/,
+                    test: /\.m?js$/,
                     loader: "source-map-loader",
                     enforce: "pre",
                 },
                 {
-                    test: /\.tsx?$/,
-                    loader: "ts-loader",
+                    test: /\.ts$/,
+                    exclude: /node_modules/,
+                    use: {
+                        loader: "swc-loader",
+                        options: {
+                            jsc: {
+                                parser: {
+                                    syntax: "typescript",
+                                },
+                                target: "es2022",
+                            },
+                        },
+                    },
                 },
             ],
         },
@@ -47,27 +62,10 @@ export default function (env) {
 
             new webpack.IgnorePlugin({
                 checkResource(resource, context) {
-                    // context is where the file is loaded FROM. meaning - it can also be in the src directory
-                    // resource is the file that is being loaded, excluding the package if loaded from the package itself.
-                    return ignoreList.flat().some((ignore) => {
-                        let test = ignore;
-                        let metadata = [];
-                        if (ignore.metadata) {
-                            test = ignore.test;
-                            metadata = ignore.metadata;
-                        }
-                        const fullPath = path.join(context, resource);
-                        let returnValue = test.test(fullPath);
-                        (metadata || []).forEach((meta) => {
-                            const [key, condition] = meta.split("=");
-                            if (key === "not" && ignore) {
-                                returnValue =
-                                    returnValue &&
-                                    !fullPath.includes(condition);
-                            }
-                        });
-                        return returnValue;
-                    });
+                    return shouldIgnore(
+                        path.join(context, resource),
+                        ignoreList
+                    );
                 },
             }),
             new webpack.optimize.LimitChunkCountPlugin({
@@ -76,7 +74,7 @@ export default function (env) {
         ],
         optimization: {
             ...getOptimizations((env.optimization || "all").split(",")),
-            minimize: env.mode === "production",
+            minimize: mode === "production",
         },
     };
 }

@@ -1,16 +1,22 @@
-import deepmerge from "deepmerge";
-
 export function getOptimizations(types) {
-    const opts = (types || [])
-        .map((type) => getMapping(type).flat())
-        .flat()
+    return (types || [])
+        .flatMap((type) => getMapping(type).flat())
         .map((type) => getOptimization(type))
         .filter((optimization) => optimization !== undefined)
-        .reduce((acc, curr) => deepmerge(acc, curr), {});
-    return opts;
+        .reduce(
+            (result, optimization) => ({
+                splitChunks: {
+                    cacheGroups: {
+                        ...result.splitChunks?.cacheGroups,
+                        ...optimization.splitChunks.cacheGroups,
+                    },
+                },
+            }),
+            {}
+        );
 }
 
-export function getMapping(type, ignore) {
+export function getMapping(type) {
     switch (type) {
         case "vendors": {
             return ["vendors;chunks=initial", "vendors;chunks=async"];
@@ -48,10 +54,17 @@ export function getMapping(type, ignore) {
             ];
         }
         case "notWebGPU": {
-            return ["webglOnly", "webglExtensions", "webglShaders"];
+            return ["webglOnly", "webglShaders"];
         }
         case "loaders": {
-            return ["loadersGlTF", "loadersOBJ", "loadersSTL", "loadersSPLAT"];
+            return [
+                "loadersGlTF",
+                "loadersBVH",
+                "loadersFBX",
+                "loadersOBJ",
+                "loadersSPLAT",
+                "loadersSTL",
+            ];
         }
         case "gltf": {
             return ["loadersGlTF;chunks=async"];
@@ -59,6 +72,8 @@ export function getMapping(type, ignore) {
         case "notGLTF": {
             return [
                 "loadersGlTF1",
+                "loadersBVH;not=metadata",
+                "loadersFBX;not=metadata",
                 "loadersOBJ;not=metadata",
                 "loadersSTL;not=metadata",
                 "loadersSPLAT;not=metadata",
@@ -72,10 +87,27 @@ export function getMapping(type, ignore) {
 
 export function getIgnoresArray(types) {
     return (types || [])
-        .map((type) => getMapping(type).flat())
-        .flat()
+        .flatMap((type) => getMapping(type).flat())
         .map((type) => getRegexForType(type))
         .filter((ignore) => ignore);
+}
+
+export function shouldIgnore(fullPath, ignoreList) {
+    return ignoreList.some((ignore) => {
+        const test = ignore instanceof RegExp ? ignore : ignore.test;
+        const metadata = ignore instanceof RegExp ? [] : ignore.metadata;
+        const matches = Array.isArray(test)
+            ? test.some((pattern) => pattern.test(fullPath))
+            : test.test(fullPath);
+
+        return (
+            matches &&
+            metadata.every((entry) => {
+                const [key, condition] = entry.split("=");
+                return key !== "not" || !fullPath.includes(condition);
+            })
+        );
+    });
 }
 
 export function getRegexForType(type) {
@@ -108,14 +140,16 @@ export function getRegexForType(type) {
             return /loaders\/glTF\/2\.0/;
         }
         case "webglOnly": {
-            return [
-                /Engines\/Extensions/,
-                /Engines\/engine\.js/,
-                /Engines\/thinEngine\.js/,
-            ];
+            return /Engines\/engine\.js$/;
         }
         case "loadersGlTF1": {
             return /loaders\/glTF\/1\.0/;
+        }
+        case "loadersBVH": {
+            return /loaders\/BVH/;
+        }
+        case "loadersFBX": {
+            return /loaders\/FBX/;
         }
         case "loadersOBJ": {
             return /loaders\/OBJ/;
@@ -262,23 +296,21 @@ function getOptimization(optimizationType) {
             };
         }
         default: {
-            console.log("Unknown type", type, test.length);
-            if (!type || Array.isArray(test)) {
+            if (!type || !test || Array.isArray(test)) {
                 return undefined;
-            } else {
-                return {
-                    splitChunks: {
-                        cacheGroups: {
-                            [type + "-" + chunks]: {
-                                test,
-                                name: type + "-" + chunks,
-                                priority: 1,
-                                ...data,
-                            },
+            }
+            return {
+                splitChunks: {
+                    cacheGroups: {
+                        [type + "-" + chunks]: {
+                            test,
+                            name: type + "-" + chunks,
+                            priority: 1,
+                            ...data,
                         },
                     },
-                };
-            }
+                },
+            };
         }
     }
 }

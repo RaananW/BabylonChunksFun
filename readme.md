@@ -1,41 +1,69 @@
-# Babylon.js Code splitting using webpack and rollup
+# Babylon.js code splitting with webpack and Rollup
 
-This is an example of how to  use either webpack or rollup to generate chunks for your Babylon.js project.
+This repository demonstrates how webpack and Rollup split a Babylon.js
+application into chunks. The sample dynamically selects a WebGL or WebGPU
+engine, loads a glTF controller model and an environment texture, and uses both
+`@babylonjs/core` and `@babylonjs/loaders`.
 
-The project will load an environment and a glb file and uses both `@babylonjs/core` and `@babylonjs/loaders` to load the scene.
+The webpack configuration also demonstrates named cache groups and build-time
+ignore lists. The Rollup configuration demonstrates dynamic chunks and the same
+ignore lists, but intentionally lets Rollup choose chunk boundaries because its
+chunk model does not distinguish synchronous and asynchronous cache groups in
+the same way as webpack.
 
-The general gist is - there is an included list and ignored list. ignored list is for the files that you don't want to be included in the chunk. The included list is for the files that you want to be included in the chunk.
+## Requirements
 
-Note that this is just an example. There is a lot of room for improvement. It does feel however, like the optimization file should be a consumable package or part of some sort of a "Babylon build tool" that would be able to generate the chunks for you
+- Node.js 22.15 or newer
+- npm
 
-## How to use?
+Install the locked dependencies:
 
-Simple - build your project using one of the provided scripts. The scripts are:
+```sh
+npm ci
+```
 
-- `npm run webpack:build` - builds the project using webpack with no ignored list
-- `npm run rollup:build` - builds the project using rollup with no ignored list
-- `npm run webpack:webgl-gltf:build` - build the project with ONLY webgl and glTF loaders included
-- `npm run rollup:webgl-gltf:build` - build the project with ONLY webgl and glTF loaders included
-- `npm run webpack:webgpu-gltf:build` - build the project with ONLY webgpu and glTF loaders included
-- `npm run rollup:webgpu-gltf:build` - build the project with ONLY webgpu and glTF loaders included
+## Build and serve
 
-To serve (currently only supported with webpack) change "build" with "serve" in the script name. For example `npm run webpack:webgl-gltf:serve`
+| Command | Description |
+| --- | --- |
+| `npm run build` | Build the default webpack and Rollup examples |
+| `npm run webpack:build` | Build the default webpack example |
+| `npm run webpack:webgl-gltf:build` | Include only WebGL and glTF support with webpack |
+| `npm run webpack:webgpu-gltf:build` | Include only WebGPU and glTF support with webpack |
+| `npm run rollup:build` | Build the default Rollup example |
+| `npm run rollup:webgl-gltf:build` | Include only WebGL and glTF support with Rollup |
+| `npm run rollup:webgpu-gltf:build` | Include only WebGPU and glTF support with Rollup |
+| `npm run webpack:serve` | Serve the default webpack example |
+| `npm run webpack:webgl-gltf:serve` | Serve the WebGL-only webpack example |
+| `npm run webpack:webgpu-gltf:serve` | Serve the WebGPU-only webpack example |
+| `npm test` | Run optimization-mapping regression tests |
+| `npm run check` | Test, type-check, and build every supported configuration |
 
-Note that if you use the webgpu version, the initial load will fail! That is because the initial load is configured to use WebGL. add `?engine=webgpu` to the URL to see it working.
+Webpack writes to `dist-webpack`; Rollup writes to `dist-rollup`.
 
-### Production build
+The sample uses WebGL by default. Add `?engine=webgpu` to the URL when serving a
+WebGPU build.
 
-If you are building with rollup, add `-- --environment NODE_ENV:production` after the npm run call. if you are building with webpack, add `-- --env=mode=production`.
+## Production and single-chunk builds
 
-### Single chunk
+Use `npm run webpack:production:build` or
+`npm run rollup:production:build` for minified production output.
 
-To avoid generating chunks (but still use the ignore lists!) add the following to the npm command:
+To preserve the ignore lists while disabling code splitting, pass the
+single-chunk option:
 
-- in rollup add `-- --environment singleChunk:true`
-- in webpack add `-- --env=singleChunk=true`
+```sh
+npm run webpack:webgl-gltf:build -- --env=singleChunk=true
+npm run rollup:webgl-gltf:build -- --environment singleChunk:true
+```
 
-## Caveats
+## Extending the example
 
-- Due to the way rollup works and the way we currently pack our packages, rollup's manual chunks function doesn't quite work as expected. If you want to know exactly why I will be happy to explain privately. The webpack version works as expected.
-- webpack natively supports separating between async-loads and static loads for chunking. You will see that certain chunks have the suffix "async" in their name. This is because they are loaded asynchronously. Rollup doesn't support this out of the box.
-- If Babylon will add new dynamic imports that are not supported here, they will be added to the default "vendors" package. If you want to chunk'em out you will need to configure the optimization file accordingly.
+`optimizations.js` maps feature names to package paths. webpack uses those paths
+for named cache groups and both bundlers use them to replace excluded modules
+at build time. If Babylon.js adds another dynamically imported feature, add its
+path mapping there to place or exclude it explicitly.
+
+This is an experiment rather than a reusable build package. A production
+Babylon.js build tool could turn these mappings into a supported, versioned
+configuration layer for multiple bundlers.
